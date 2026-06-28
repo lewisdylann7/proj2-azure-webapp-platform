@@ -1,0 +1,22 @@
+# ============================================
+# EXAMPLE TERRAFORM VARIABLES
+# ============================================
+# Copy this file to terraform.tfvars and fill in your values.
+# DO NOT commit terraform.tfvars to Git 
+
+project_name = "webapp"
+environment  = "dev"
+owner        = "your-name-here"
+location     = "eastus"
+
+resource_group_name          = "rg-webapp-dev"
+app_service_plan_name        = "asp-webapp-dev"
+web_app_name                 = "app-webapp-dev-XXXXX"     # Replace XXXXX with unique numbers
+sql_server_name              = "sql-webapp-dev-XXXXX"     # Replace XXXXX with unique numbers
+sql_database_name            = "sqldb-webapp-dev"
+key_vault_name               = "kv-webapp-dev-XXXXX"      # Replace XXXXX with unique numbers
+log_analytics_workspace_name = "log-webapp-dev"
+application_insights_name    = "appi-webapp-dev"
+
+sql_admin_username = "sqladminuser"
+sql_admin_password = "REPLACE_WITH_STRONG_PASSWORD"
