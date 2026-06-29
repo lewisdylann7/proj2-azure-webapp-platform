@@ -1,142 +1,53 @@
-# ============================================
-# GITHUB ACTIONS - TERRAFORM VALIDATION
-# ============================================
-# This workflow automatically validates Terraform code when you push changes.
-# It runs formatting checks, initialization, and validation.
-#
-# GITHUB ACTIONS CONCEPTS:
-#
-# WORKFLOW: A configurable automated process (this file)
-# - Triggered by events (push, PR, schedule, manual)
-# - Contains one or more jobs
-#
-# JOB: A set of steps that execute on the same runner
-# - Jobs run in parallel by default
-# - Can depend on other jobs
-#
-# STEP: An individual task within a job
-# - Runs commands or uses pre-built actions
-# - Runs sequentially within a job
-#
-# RUNNER: A server that executes jobs
-# - GitHub provides hosted runners (ubuntu-latest, windows-latest, macos-latest)
-# - You can also use self-hosted runners
-#
-# SECRETS: Encrypted variables stored in GitHub
-# - Access with ${{ secrets.NAME }}
-# - Never logged in output (automatically masked)
-
 name: Terraform Validation
 
-# ----------------------------------------
-# TRIGGERS
-# ----------------------------------------
 on:
-  # Run on push to main or develop branches
   push:
     branches:
       - main
       - develop
-    # Only run when Terraform files change
     paths:
       - '**.tf'
       - '**.tfvars'
       - '.github/workflows/terraform.yml'
-  
-  # Run on pull requests to main
   pull_request:
     branches:
       - main
-  
-  # Allow manual trigger from Actions tab
+      - develop
   workflow_dispatch:
 
-# ----------------------------------------
-# PERMISSIONS
-# ----------------------------------------
-# Principle of least privilege - only grant what's needed
 permissions:
-  contents: read        # Read repository code
-  pull-requests: write  # Comment on PRs
+  contents: read
+  pull-requests: write
 
-# ----------------------------------------
-# ENVIRONMENT VARIABLES
-# ----------------------------------------
-# Available to all jobs in this workflow
 env:
   TF_IN_AUTOMATION: "true"
 
-# ----------------------------------------
-# JOBS
-# ----------------------------------------
 jobs:
-  # ========================================
-  # JOB: validate
-  # ========================================
   validate:
     name: Validate Terraform
     runs-on: ubuntu-latest
-    
+
     steps:
-      # ---- Step 1: Check out code ----
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
-        # This downloads your repository to the runner
-      
-      # ---- Step 2: Setup Terraform ----
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "1.6.0"
-      
-      # ---- Step 3: Terraform Format Check ----
-      - name: Check Terraform Formatting
+          terraform_version: 1.6.6
+          terraform_wrapper: false
+
+      - name: Terraform version
+        run: terraform version
+
+      - name: Terraform Format Check
         id: fmt
         run: terraform fmt -check -recursive -diff
-        continue-on-error: true
-      
-      # ---- Step 4: Terraform Init ----
-      - name: Initialize Terraform
+
+      - name: Terraform Init
         id: init
         run: terraform init -backend=false
-        env:
-          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-      
-      # ---- Step 5: Terraform Validate ----
-      - name: Validate Terraform Configuration
+
+      - name: Terraform Validate
         id: validate
         run: terraform validate -no-color
-      
-      # ---- Step 6: Comment on PR ----
-      - name: Comment on Pull Request
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const output = `## 🔍 Terraform Validation Results
-            
-            | Check | Status |
-            |-------|--------|
-            | Format | \`${{ steps.fmt.outcome }}\` |
-            | Init | \`${{ steps.init.outcome }}\` |
-            | Validate | \`${{ steps.validate.outcome }}\` |
-            
-            *Pushed by: @${{ github.actor }}*`;
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            });
-      
-      # ---- Step 7: Fail on format errors ----
-      - name: Fail on Format Errors
-        if: steps.fmt.outcome == 'failure'
-        run: |
-          echo "❌ Terraform files are not properly formatted."
-          echo "Run 'terraform fmt -recursive' locally and push the changes."
-          exit 1
