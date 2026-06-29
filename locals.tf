@@ -1,17 +1,17 @@
 locals {
   common_tags = {
-    project = var.project_name
-    environment = var.environment
-    owner = var.owner
-    managed_by = "terraform"
-    architecture = "web-app-platform"
+    project       = var.project_name
+    environment   = var.environment
+    owner         = var.owner
+    managed_by    = "terraform"
+    architecture  = "web-app-platform"
     deployed_date = timestamp()
   }
 
   name_prefix = "${var.project_name}-${var.environment}"
 
 
-  sql_connection_string = join("",[
+  sql_connection_string = join("", [
     "server=tcp:${var.sql_server_name}.database.windows.net,1433;",
     "Initial Catalog=${var.sql_database_name};",
     "Persist Security Info=False;",
